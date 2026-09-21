@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  mariadb:
+    build:
+      context: ./requirements/mariadb
+      dockerfile: Dockerfile
+    container_name: mariadb
+    image: mariadb
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - MYSQL_DATABASE=${SQL_DATABASE}
+      - MYSQL_USER=${SQL_USER}
+      - MYSQL_PASSWORD=${SQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${SQL_ROOT_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - inception_network
+
+  wordpress:
+    build:
+      context: ./requirements/wordpress
+      dockerfile: Dockerfile
+    container_name: wordpress
+    image: wordpress
+    restart: always
+    depends_on:
+      - mariadb
+    env_file:
+      - .env
+    environment:
+      - WORDPRESS_DB_HOST=${WORDPRESS_DB_HOST}
+      - WORDPRESS_TITLE=${WORDPRESS_TITLE}
+      - WORDPRESS_ADMIN_USER=${WORDPRESS_ADMIN_USER}
+      - WORDPRESS_ADMIN_PASSWORD=${WORDPRESS_ADMIN_PASSWORD}
+      - WORDPRESS_ADMIN_EMAIL=${WORDPRESS_ADMIN_EMAIL}
+      - WORDPRESS_USER=${WORDPRESS_USER}
+      - WORDPRESS_PASSWORD=${WORDPRESS_PASSWORD}
+      - WORDPRESS_EMAIL=${WORDPRESS_EMAIL}
+      - DOMAIN_NAME=${DOMAIN_NAME}
+    volumes:
+      - wordpress_data:/var/www/wordpress
+    networks:
+      - inception_network
+
+  nginx:
+    build:
+      context: ./requirements/nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    image: nginx
+    restart: always
+    depends_on:
+      - wordpress
+    ports:
+      - "443:443"
+    volumes:
+      - wordpress_data:/var/www/wordpress
+    networks:
+      - inception_network
+
+networks:
+  inception_network:
+    driver: bridge
+    name: inception_network
+
+volumes:
+  mariadb_data:
+    name: mariadb_data
+  wordpress_data:
+    name: wordpress_data

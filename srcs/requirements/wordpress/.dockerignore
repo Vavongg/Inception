@@ -1,0 +1,11 @@
+.git/
+.gitignore
+*.swp
+*.swo
+*~
+.DS_Store
+*.log
+*.tmp
+README.md
+DEV_DOC.md
+USER_DOC.md
