@@ -1,42 +1,29 @@
 #!/bin/bash
 
-# Exit immediately if a command exits with a non-zero status
+# Exit immediately if error
 set -e
 
-echo "=== MariaDB Initialization ==="
+echo "=== Mariadb Initialization ==="
 
-# 1. Directory and permission setup
-echo "Setting up directories and permissions..."
+# 1. Create socket directory and set permissions
 mkdir -p /run/mysqld
-chown -R mysql:mysql /run/mysqld /var/lib/mysql
+chown -R mysql:mysql /run/mysqld
 
 # 2. Check if database already exists
 if [ ! -d "/var/lib/mysql/${SQL_DATABASE}" ]; then
-    echo "First run: creating data directory..."
+    mysqld_safe &
 
-    mariadb-install-db --user=mysql --datadir=/var/lib/mysql > /dev/null
-    echo "System tables created."
+    until mysqladmin ping --silent 2>/dev/null; do
+        sleep 1
+    done
 
-    echo "Configuring database and user access..."
-
-    mysqld --user=mysql --bootstrap << EOF
-USE mysql;
-FLUSH PRIVILEGES;
-
-ALTER USER 'root'@'localhost' IDENTIFIED BY '${SQL_ROOT_PASSWORD}';
-
-CREATE DATABASE IF NOT EXISTS \`${SQL_DATABASE}\`;
-CREATE USER IF NOT EXISTS '${SQL_USER}'@'\%' IDENTIFIED BY '${SQL_PASSWORD}';
-GRANT ALL PRIVILEGES ON \`${SQL_DATABASE}\`.* TO '${SQL_USER}'@'%';
-
-FLUSH PRIVILEGES;
-EOF
-
-    echo "--> Database '${SQL_DATABASE}' and user '${SQL_USER}' successfully created!"
-else
-    echo "--> Database already initialized. Skipping configuration."
+    mysql -e "CREATE DATABASE IF NOT EXISTS \`${SQL_DATABASE}\`;"
+    mysql -e "CREATE USER IF NOT EXISTS '${SQL_USER}'@'%' IDENTIFIED BY '${SQL_PASSWORD}';"
+    mysql -e "GRANT ALL PRIVILEGES ON \`${SQL_DATABASE}\`.* TO '${SQL_USER}'@'%';"
+    mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${SQL_PASSWORD}';"
+    mysqladmin --password=${SQL_PASSWORD} shutdown
 fi
 
-# 3. Start server in foreground with console logging
-echo "=== Starting MariaDB Server ==="
-exec mysqld --user=mysql --console
+# 3. Start MariaDB server
+echo "=== Starting Mariadb Service ==="
+exec mysqld_safe

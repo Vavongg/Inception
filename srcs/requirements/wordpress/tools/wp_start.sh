@@ -1,28 +1,24 @@
 #!/bin/bash
 
-# Exit immediately if a command exits with a non-zero status
+# Exit immediately if an error occurs
 set -e
 
 echo "=== WordPress Initialization ==="
 
-# 1. Wait for MariaDB server availability
-echo "Waiting for MariaDB connection..."
-until mariadb-admin ping -h"mariadb" --silent; do
-    echo "    MariaDB is not ready yet, retrying in 2 seconds..."
+# 1. Wait for MariaDB network availability before proceeding
+until mariadb-admin ping -h"mariadb" -u"${SQL_USER}" -p"${SQL_PASSWORD}" --silent; do
+    echo "    MariaDB not ready yet, retrying..."
     sleep 2
 done
-echo "Connection to MariaDB successful!"
 
-# 2. Check if WordPress is already configured
+# 2. Install and configure WordPress if not already set up
 if [ ! -f /var/www/wordpress/wp-config.php ]; then
-    echo "First run detected: starting WordPress installation..."
+    echo "First run detected: installing WordPress..."
 
-    # Download WordPress core files
-    echo "Downloading WordPress core files..."
+    # Download WordPress core files via WP-CLI
     wp core download --allow-root
-	
-    # Generate wp-config.php configuration file
-    echo "Creating wp-config.php configuration file..."
+    
+    # Generate the database configuration file
     wp config create \
         --dbname="${SQL_DATABASE}" \
         --dbuser="${SQL_USER}" \
@@ -30,8 +26,7 @@ if [ ! -f /var/www/wordpress/wp-config.php ]; then
         --dbhost="mariadb:3306" \
         --allow-root
 
-    # Automatically install WordPress core and administrator account
-    echo "Installing WordPress core and administrator account..."
+    # Install WordPress core and create the main administrator account
     wp core install \
         --url="${DOMAIN_NAME}" \
         --title="${WP_TITLE}" \
@@ -41,22 +36,21 @@ if [ ! -f /var/www/wordpress/wp-config.php ]; then
         --skip-email \
         --allow-root
 
-    # Create standard second user
-    echo "Creating standard user ('${WP_USER}')..."
+    # Create the mandatory second standard user (author role)
     wp user create \
         "${WP_USER}" "${WP_USER_EMAIL}" \
         --role=author \
         --user_pass="${WP_USER_PASSWORD}" \
         --allow-root
 
-    echo "WordPress installation and configuration completed successfully!"
+    echo "WordPress installation completed successfully."
 else
-    echo "WordPress is already configured (wp-config.php present). Skipping installation."
+    echo "WordPress already configured. Skipping installation."
 fi
 
-# 3. Prepare PHP-FPM runtime directory
+# Ensure PHP-FPM socket directory exists
 mkdir -p /run/php
 
-# 4. Start PHP-FPM 8.2 in foreground
-echo "=== Starting PHP-FPM (PHP 8.2) Service ==="
+# 3. Start PHP-FPM in the foreground (PID 1) to keep the container running
+echo "=== Starting PHP-FPM Service ==="
 exec /usr/sbin/php-fpm8.2 -F
