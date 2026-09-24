@@ -51,5 +51,16 @@ networks:
 volumes:
   mariadb_data:
     name: mariadb_data
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ainthana/data/mariadb'
+
   wordpress_data:
     name: wordpress_data
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ainthana/data/wordpress'
