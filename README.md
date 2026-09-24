@@ -59,3 +59,18 @@ cd Inception
 
 # Build and start the infrastructure
 make
+```
+## Resources
+
+### Documentation & References
+- **Stéphane Robert's Blog**:
+  - [Documentation de Conteneurisation](https://blog.stephane-robert.info/docs/conteneurisation/)
+  - [Moteurs de Conteneurs - Docker](https://blog.stephane-robert.info/docs/conteneurs/moteurs-conteneurs/docker/)
+  - [Rédiger un Dockerfile](https://blog.stephane-robert.info/docs/conteneurs/images-conteneurs/ecrire-dockerfile/)
+  - [Django & Tests Unitaires sous Docker](https://blog.stephane-robert.info/post/django-test-unitaire-docker/)
+- **Official Documentation**:
+  - [Nginx Official Documentation](https://nginx.org/en/docs/)
+  - [WordPress & WP-CLI Documentation](https://developer.wordpress.org/cli/commands/)
+  - [MariaDB Knowledge Base](https://mariadb.com/kb/en/)
+  - [Docker & Docker Compose Documentation](https://docs.docker.com/)
+
